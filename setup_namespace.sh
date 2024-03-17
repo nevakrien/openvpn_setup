@@ -8,8 +8,29 @@ HOST_IP="10.200.200.1"
 NS_IP="10.200.200.2"
 DNS_IP="8.8.8.8"
 
+# Default to auto-detecting the internet-facing interface
+INTERFACE_MODE=${1:-auto}
+DEFAULT_IFACE=""
+
+if [ "$INTERFACE_MODE" == "auto" ]; then
+    # Auto-detect the default network interface
+    DEFAULT_IFACE=$(ip route | grep default | awk '{print $5}')
+else
+    # Use the manually specified interface
+    DEFAULT_IFACE="$INTERFACE_MODE"
+fi
+
+# Check if the interface is Wi-Fi or Ethernet
+if [[ $(iwconfig $DEFAULT_IFACE 2>&1) =~ "no wireless extensions." ]]; then
+    CONN_TYPE="Ethernet"
+else
+    CONN_TYPE="Wi-Fi"
+fi
+
+echo "Detected connection type: $CONN_TYPE on interface $DEFAULT_IFACE"
+
 # Delete the existing namespace if it exists
-ip netns del $NAMESPACE 2>/dev/null
+ip netns list | grep -q $NAMESPACE && ip netns del $NAMESPACE
 
 # Create a new namespace
 ip netns add $NAMESPACE
@@ -34,7 +55,7 @@ ip netns exec $NAMESPACE ip route add default via $HOST_IP
 
 # Enable IP forwarding and set up NAT
 echo 1 > /proc/sys/net/ipv4/ip_forward
-iptables -t nat -A POSTROUTING -s $NS_IP/24 -o eth0 -j MASQUERADE
+iptables -t nat -A POSTROUTING -s $NS_IP/24 -o $DEFAULT_IFACE -j MASQUERADE
 
 # Set DNS for the namespace
 mkdir -p /etc/netns/$NAMESPACE
