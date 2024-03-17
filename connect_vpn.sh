@@ -7,8 +7,8 @@ if [ "$#" -ne 1 ]; then
 fi
 
 VPN_CONFIG=$1
-CREDENTIALS_FILE="/path/to/your/vpn-auth.txt"
 NAMESPACE="mynamespace"
 
 # Start OpenVPN within the namespace using the provided VPN configuration file
-ip netns exec $NAMESPACE openvpn --config "$VPN_CONFIG" --auth-user-pass "$CREDENTIALS_FILE" --auth-nocache
+ip netns exec $NAMESPACE openvpn --config "$VPN_CONFIG" --auth-user-pass /dev/stdin --auth-nocache --script-security 2 --up auth-script.sh
+
