@@ -1,11 +1,19 @@
 # openvpn_setup
 trying to make a multi endpoint scraper with my nordvpn acount
 
-# use
+# setup
+if you are using nordvpn
+go folow nordvpns official guide on how to set it up https://support.nordvpn.com/hc/en-us/articles/19683394518161-OpenVPN-connection-on-NordVPN
 
-sudo ./setup_namespace.sh
-sudo ./connect_vpn.sh ovpn_configs/us9178.nordvpn.com.udp1194.ovpn
+
+docker build -t my-nordvpn .
+docker run --cap-add=NET_ADMIN --device=/dev/net/tun --network="bridge" --name=my-nordvpn-container -d my-nordvpn
+
 
 # test
 
-sudo ip netns exec mynamespace ping -c 4 8.8.8.8
+
+docker exec my-nordvpn-container curl ipinfo.io
+
+curl ipinfo.io
+
